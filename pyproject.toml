@@ -19,9 +19,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Plain uvicorn, not uvicorn[standard]: the extra pulls uvloop (whose bundled
+# libuv cannot build on Android/Termux) and watchfiles (needs a Rust toolchain).
+# The dashboard is a read-only page view and does not need the fast loop.
 dashboard = [
   "fastapi>=0.110,<1.0",
-  "uvicorn[standard]>=0.29,<1.0",
+  "uvicorn>=0.29,<1.0",
 ]
 dev = [
   "pytest>=8.0,<9.0",

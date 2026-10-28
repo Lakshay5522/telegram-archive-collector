@@ -656,6 +656,13 @@ State lives in the `collector-data` volume (`/data`): session, SQLite database a
 cleanly. The dashboard container mounts the volume read-only and works because the
 dashboard only ever opens the database in read-only mode.
 
+### 13.1 Android (Termux)
+
+The collector also runs on a phone under Termux, supervised by runit instead of systemd.
+`bash scripts/termux-setup.sh` installs and wires it up; **`docs/TERMUX.md`** covers the
+Android-specific traps (no `uvloop`, keeping state off `/sdcard`, wake locks and battery
+exemption, autostart at boot) and how to move the data directory to a VPS later.
+
 ---
 
 ## 14. Tests
