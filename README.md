@@ -607,6 +607,31 @@ collector health: heartbeat freshness, queue movement, ambiguous deliveries and 
 imports, returning **503** when the collector is not healthy. Use `/ready` for monitoring
 and container health checks.
 
+### 12.1 Hosting the dashboard on a serverless platform (Vercel)
+
+`app.py` at the repository root exports a module-level `app`, so a platform that expects an
+ASGI entrypoint (`app:app`, already declared under `[tool.vercel]` in `pyproject.toml`) can
+serve the dashboard without the CLI. `requirements.txt` carries the dashboard dependencies
+for hosts that install from it.
+
+```bash
+vercel deploy
+# environment variables to set in the project:
+#   DASHBOARD_USERNAME, DASHBOARD_PASSWORD   (mandatory — no anonymous access)
+#   DATABASE_PATH                            (a mounted/synced copy of collector.sqlite3)
+```
+
+**What a serverless deployment cannot do.** It serves the dashboard and nothing else. The
+collector is a long-running daemon: it holds a Telethon session, keeps a live message
+handler open and forwards into your channel. Serverless functions have no persistent
+process, no writable disk (only `/tmp`) and no long-lived network connection, so the
+collector must keep running on a service (systemd or Docker, sections 10 and 13).
+
+Without `DATABASE_PATH` pointing at a real ledger the dashboard starts on an empty database
+under `/tmp/data`: `/health` returns 200, `/ready` returns 503 (`no heartbeat recorded`)
+and the pages render an empty archive. If `DASHBOARD_USERNAME`/`DASHBOARD_PASSWORD` are
+missing, the app answers 503 with setup guidance rather than serving unauthenticated data.
+
 ---
 
 ## 13. Docker

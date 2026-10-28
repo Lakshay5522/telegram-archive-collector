@@ -1,0 +1,8 @@
+# Dependencies for the dashboard-only deployment (Vercel and similar hosts).
+# The collector itself is a long-running service: install it with
+# `pip install -e .` from pyproject.toml instead.
+aiosqlite>=0.19,<1.0
+fastapi>=0.110,<1.0
+python-dotenv>=1.0,<2.0
+telethon>=1.34,<2.0
+uvicorn[standard]>=0.29,<1.0
