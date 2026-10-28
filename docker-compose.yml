@@ -1,0 +1,52 @@
+services:
+  collector:
+    build: .
+    image: telegram-archive-collector:1.0.0
+    container_name: telegram-collector
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATA_DIR: /data
+      SESSION_PATH: /data/collector.session
+      DATABASE_PATH: /data/collector.sqlite3
+      LOG_DIR: /data/logs
+    volumes:
+      # Persistent state: session, SQLite database and logs.
+      - collector-data:/data
+    # The collector needs no inbound ports; the dashboard is optional and
+    # should stay bound to localhost unless a reverse proxy with TLS fronts it.
+    stop_grace_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  dashboard:
+    image: telegram-archive-collector:1.0.0
+    container_name: telegram-collector-dashboard
+    restart: unless-stopped
+    profiles: ["dashboard"]
+    env_file:
+      - .env
+    environment:
+      DATA_DIR: /data
+      DATABASE_PATH: /data/collector.sqlite3
+      DASHBOARD_ENABLED: "true"
+      DASHBOARD_HOST: 0.0.0.0
+    command: ["python", "-m", "collector", "dashboard"]
+    volumes:
+      - collector-data:/data:ro
+    ports:
+      - "127.0.0.1:8080:8080"   # expose only via a TLS reverse proxy
+    healthcheck:
+      # /ready reflects real collector health; /health is liveness only.
+      test: ["CMD", "python", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health').status==200 else 1)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  collector-data:

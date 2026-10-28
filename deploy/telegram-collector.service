@@ -1,0 +1,38 @@
+[Unit]
+Description=Telegram Archive Collector (Telethon MTProto collector)
+Documentation=file:/opt/telegram-collector/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=telegram-collector
+Group=telegram-collector
+WorkingDirectory=/opt/telegram-collector
+
+# Secrets live outside the code tree, readable only by this user.
+EnvironmentFile=/etc/telegram-collector/collector.env
+Environment=PYTHONUNBUFFERED=1
+
+ExecStart=/opt/telegram-collector/.venv/bin/python -m collector run
+# Long-running MTProto session: restart on crash, never give up.
+Restart=always
+RestartSec=10
+# Give workers time to release leases and close the session cleanly.
+KillSignal=SIGTERM
+TimeoutStopSec=90
+
+# Hardening: the process needs write access only to its state directory.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/telegram-collector
+UMask=0077
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=telegram-collector
+
+[Install]
+WantedBy=multi-user.target
